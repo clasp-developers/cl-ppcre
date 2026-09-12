@@ -376,22 +376,24 @@ repetition matches at CURR-POS."
                                     (the fixnum (* len maximum))))))
         ;; move forward by LEN and always try NEXT-FN first, then
         ;; CHECK-CUR-POS
-        (loop for curr-pos of-type fixnum from start-pos
-                                          below target-end-pos
-                                          by len
+        ;; Advance explicitly so FINALLY sees the endpoint independently
+        ;; of LOOP's arithmetic iteration variable semantics.
+        (loop with curr-pos of-type fixnum = start-pos
+              while (< curr-pos target-end-pos)
               thereis (funcall next-fn curr-pos)
               while ,check-curr-pos
+              do (incf curr-pos len)
               finally (return (funcall next-fn curr-pos)))))
   ;; basically the same code; it's just a bit easier because we're
   ;; not bounded by MAXIMUM
   (lambda (start-pos)
     (declare (fixnum start-pos))
     (let ((target-end-pos (1+ (- *end-pos* len min-rest))))
-      (loop for curr-pos of-type fixnum from start-pos
-                                        below target-end-pos
-                                        by len
+      (loop with curr-pos of-type fixnum = start-pos
+            while (< curr-pos target-end-pos)
             thereis (funcall next-fn curr-pos)
             while ,check-curr-pos
+            do (incf curr-pos len)
             finally (return (funcall next-fn curr-pos)))))))
 
 (defgeneric create-non-greedy-constant-length-matcher (repetition next-fn)
